@@ -127,3 +127,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+desktop.ini
+key.txt
+driver/chromedriver80.exe
+driver/chromedriver81.exe
