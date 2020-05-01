@@ -131,23 +131,21 @@ if __name__ == '__main__':
             map(dv, city, zoom)
             killd(dv)
 
-            spot = find_spot()
-            print("spot: ", spot)
+            spots = find_spot()
             location = loc_lat_lng(city)
             print(location)
             elev = gmaps.elevation(location)
             print(elev)
-            #for i in range(len(spot)):
-            #print("color - ", i)
             print(location)
-            sp_coords = spot_coords(location, spot[1], zoom, resolution)
+            print("spots - ", spots)
+            sp_coords = spot_coords(location, spots[1], zoom, resolution)
+
             print(sp_coords)
-            print("FINISH ==========================================")
             break
         except:
             zoom -= 1
             print("Nothing found, zooming out...", zoom)
-    final_dist = gmaps.distance_matrix(location,sp_coords)['rows'][0]['elements'][0]['distance']['text']
+    final_dist = gmaps.distance_matrix(location, sp_coords)['rows'][0]['elements'][0]['distance']['text']
     print("Distance to the spot = ", final_dist)
 
 '''

@@ -131,3 +131,5 @@ desktop.ini
 key.txt
 driver/chromedriver80.exe
 driver/chromedriver81.exe
+.vscode/launch.json
+lpm.png
