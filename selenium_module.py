@@ -15,10 +15,10 @@ def boot(resolution):
     chrome_options.add_experimental_option("prefs",prefs)
     res = "--window-size=" + resolution
     chrome_options.add_argument(res)
-    chrome_options.add_argument('--headless')
+    #chrome_options.add_argument('--headless')
     
     # driver itself
-    dv = webdriver.Chrome(chrome_options = chrome_options, executable_path = r"./driver/chromedriver80.exe")
+    dv = webdriver.Chrome(chrome_options = chrome_options, executable_path = r"./driver/chromedriver83.exe")
     return dv
 
 # kill the driver
@@ -30,15 +30,15 @@ def map(dv, city, zoom):
     # get link
     dv.get("https://www.lightpollutionmap.info/#zoom=4&lat=5759860&lon=1619364&layers=B0TFFFFFFFFFFFFF")
     WebDriverWait(dv, 20).until(EC.visibility_of_all_elements_located)
-    time.sleep(1)
+    time.sleep(3)
     
     # close info popup
-    close_poppup = dv.find_element_by_xpath("/html/body/div[4]/div[1]")
+    close_poppup = dv.find_element_by_xpath("/html/body/div[5]/div[1]")
     close_poppup.click()
     time.sleep(1)
     
     # slide transparency to 100
-    slider = dv.find_element_by_xpath("/html/body/div[1]/div[2]/ul/li[1]/ul/li/div/div[2]/div/span")
+    slider = dv.find_element_by_xpath("/html/body/div[2]/div[2]/ul/li[1]/ul/li/div/div[2]/div[3]/span")
     for i in range(40):
         slider.send_keys(Keys.ARROW_RIGHT)
     time.sleep(0.5)
@@ -58,7 +58,7 @@ def map(dv, city, zoom):
     
     # try closing the video ad by xpath
     try:
-        close_ad = dv.find_element_by_xpath("/html/body/div[7]/img")
+        close_ad = dv.find_element_by_xpath("/html/body/div[9]/img")
         close_ad.click()
     except:
         None
@@ -72,13 +72,13 @@ def map(dv, city, zoom):
     time.sleep(1)
     
     # close the top right menu
-    close_right_menu = dv.find_element_by_xpath("/html/body/div[1]/div[1]/div")
+    close_right_menu = dv.find_element_by_xpath("/html/body/div[2]/div[1]/div")
     close_right_menu.click()
     time.sleep(2)
     
     # zoom out
     for i in range(10 - zoom):
-        zoom_out = dv.find_element_by_xpath("/html/body/div[1]/div[7]/div[2]/div[1]/button[2]")
+        zoom_out = dv.find_element_by_xpath("/html/body/div[2]/div[7]/div[3]/div[1]/button[2]")
         zoom_out.click()
         time.sleep(2)
 
