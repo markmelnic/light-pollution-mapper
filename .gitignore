@@ -127,10 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
 desktop.ini
-key.txt
-driver/chromedriver80.exe
-driver/chromedriver81.exe
-.vscode/launch.json
+\driver
+\.vscode
 lpm.png
-driver/chromedriver83.exe
+key.py

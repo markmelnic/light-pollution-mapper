@@ -15,7 +15,7 @@ def boot(resolution):
     chrome_options.add_experimental_option("prefs",prefs)
     res = "--window-size=" + resolution
     chrome_options.add_argument(res)
-    #chrome_options.add_argument('--headless')
+    chrome_options.add_argument('--headless')
     
     # driver itself
     dv = webdriver.Chrome(chrome_options = chrome_options, executable_path = r"./driver/chromedriver83.exe")
@@ -26,7 +26,7 @@ def killd(dv):
     dv.quit()
 
 # get map from city
-def map(dv, city, zoom):
+def lp_map(dv, city, zoom):
     # get link
     dv.get("https://www.lightpollutionmap.info/#zoom=4&lat=5759860&lon=1619364&layers=B0TFFFFFFFFFFFFF")
     WebDriverWait(dv, 20).until(EC.visibility_of_all_elements_located)
