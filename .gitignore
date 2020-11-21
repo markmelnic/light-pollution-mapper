@@ -129,7 +129,10 @@ dmypy.json
 .pyre/
 
 desktop.ini
-\driver
-\.vscode
-lpm.png
+/.vscode
 key.py
+*.png
+*.jpg
+*.kmz
+*.kml
+*.csv
