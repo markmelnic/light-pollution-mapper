@@ -1,4 +1,4 @@
-import glob, csv
+import glob, csv, os
 import pandas as pd
 from lxml import html
 from zipfile import ZipFile
@@ -13,9 +13,13 @@ KMZ_GLOBAL_IMAGE = "map.jpg"
 
 class KMZ:
     def __init__(self) -> None:
-        self.kmz_file = glob.glob("*.kmz")[0]
-        self.kmz_zip = ZipFile(self.kmz_file, "r")
-        self.kml_file = self.kmz_zip.open(ZIP_KML_DOC, "r").read()
+        self.kmz_zip = ZipFile(glob.glob("*.kmz")[0], "r")
+        if not os.path.isfile(CSV_KML_DOC):
+            self.kml_file = self.kmz_zip.open(ZIP_KML_DOC, "r").read()
+            self.indexer_csv()
+            self.load_csv()
+        else:
+            self.load_csv()
 
     def indexer_csv(self,) -> None:
         kml_content = html.fromstring(self.kml_file)
@@ -93,6 +97,3 @@ class KMZ:
 
 if __name__ == "__main__":
     kmz = KMZ()
-    kmz.indexer_csv()
-    kmz.load_csv()
-    kmz.global_imager()
