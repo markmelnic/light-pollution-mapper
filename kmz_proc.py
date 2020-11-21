@@ -9,6 +9,7 @@ pd.options.mode.chained_assignment = None
 ZIP_KML_DOC = "doc.kml"
 CSV_KML_DOC = "kml_index.csv"
 ZIP_KMZ_IMG_FOLDER = "files"
+KMZ_GLOBAL_IMAGE = "map.jpg"
 
 class KMZ:
     def __init__(self) -> None:
@@ -48,7 +49,7 @@ class KMZ:
             self.kmz_imgs = [Image.open(self.kmz_zip.open(image)) for image in self.kmz_zip.namelist() if image.split("/")[0] == ZIP_KMZ_IMG_FOLDER]
         return self.kmz_imgs
 
-    def imager(self, ) -> None:
+    def global_imager(self, ) -> None:
         globe_matrix = []
         globe_images = []
         for i, row in self.df.iterrows():
@@ -62,33 +63,36 @@ class KMZ:
                 self.df.drop(sub_df.index, inplace = True)
 
                 sub_images = self.load_images(sub_matrix)
-                widths, heights = zip(*(img.size for img in sub_images))
-                total_width = sum(widths)
-                max_height = max(heights)
+                globe_images.append(self.generate_image(sub_images, horizontal=True))
 
-                sub_lat_img = Image.new('RGB', (total_width, max_height))
-                x_offset = 0
-                for img in sub_images:
-                    sub_lat_img.paste(img, (x_offset,0))
-                    x_offset += img.size[0]
-                globe_images.append(sub_lat_img)
+        self.generate_image(globe_images, vertical=True).save(KMZ_GLOBAL_IMAGE)
 
+    def generate_image(self, images, vertical=False, horizontal=False):
+        widths, heights = zip(*(img.size for img in images))
+        if horizontal:
+            total_width = sum(widths)
+            max_height = max(heights)
 
-        widths, heights = zip(*(img.size for img in globe_images))
-        max_width = max(widths)
-        total_height = sum(heights)
+            new_image = Image.new('RGB', (total_width, max_height))
+            x_offset = 0
+            for img in images:
+                new_image.paste(img, (x_offset,0))
+                x_offset += img.size[0]
 
-        globe_image = Image.new('RGB', (max_width, total_height))
-        y_offset = 0
-        for img in globe_images:
-            globe_image.paste(img, (0,y_offset))
-            y_offset += img.size[1]
-        globe_image.save('test.jpg')
+        elif vertical:
+            max_width = max(widths)
+            total_height = sum(heights)
 
+            new_image = Image.new('RGB', (max_width, total_height))
+            y_offset = 0
+            for img in images:
+                new_image.paste(img, (0,y_offset))
+                y_offset += img.size[1]
+
+        return new_image
 
 if __name__ == "__main__":
     kmz = KMZ()
     kmz.indexer_csv()
     kmz.load_csv()
-    #kmz.load_images()
-    kmz.imager()
+    kmz.global_imager()
