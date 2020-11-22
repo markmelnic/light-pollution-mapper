@@ -4,6 +4,7 @@ from math import sqrt
 from lxml import html
 from zipfile import ZipFile
 from PIL import Image
+from scipy.spatial import distance
 
 pd.options.mode.chained_assignment = None
 
@@ -92,25 +93,41 @@ class KMZ:
                 if (row['north'] >= myloc[0] >= row['south']) and (row['west'] <= myloc[1] <= row['east']):
                     return row.tolist()
 
-    def _find_coords_image(self, user_coords, item, image):
+    def _find_pollution_coords(self, user_coords: list, item: list, image) -> list:
+        def _matrix_geo_coords(matrix_coords):
+            lat = item[3]-((item[3]-item[4])/width*matrix_coords[1])
+            lng = item[6]+((item[5]-item[6])/height*matrix_coords[0])
+            return (lat, lng)
+
+        def _closest_color(rgb: list) -> tuple:
+            r, g, b = rgb
+            color_diffs = []
+            for color in COLORS:
+                cr, cg, cb = color
+                color_diff = sqrt(abs(r - cr)**2 + abs(g - cg)**2 + abs(b - cb)**2)
+                color_diffs.append((color_diff, color))
+            return min(color_diffs)[1]
+
+        def _closest(node: tuple, nodes: list) -> tuple:
+            closest_px = distance.cdist([node], nodes).argmin()
+            return nodes[closest_px]
+
         width, height = image.size
-        print(width, height)
         wpx = int(height*(user_coords[1]-item[6])/(item[5]-item[6]))
         hpx = width - int(width*(user_coords[0]-item[4])/(item[3]-item[4]))
-        print(wpx, hpx)
         pixelmap = image.load()
-        for i in range(width/2):
-            for j in range(height/2):
-                color = self._closest_color(pixelmap[i*2, j*2])
-
-    def _closest_color(self, rgb):
-        r, g, b = rgb
-        color_diffs = []
-        for color in COLORS:
-            cr, cg, cb = color
-            color_diff = sqrt(abs(r - cr)**2 + abs(g - cg)**2 + abs(b - cb)**2)
-            color_diffs.append((color_diff, color))
-        return min(color_diffs)[1]
+        data = {}
+        for c in COLORS:
+            data[COLORS.index(c)] = []
+        for i in range(int(width/2)):
+            for j in range(int(height/2)):
+                color = _closest_color(pixelmap[i*2, j*2])
+                for c in COLORS:
+                    if color == c:
+                        data[COLORS.index(c)].append([i*2, j*2])
+        
+        closest_unique_spots = [_matrix_geo_coords(_closest((wpx, hpx), data[COLORS.index(c)])) for c in COLORS]
+        return closest_unique_spots
 
     def _load_images(self, images, single=False) -> list:
         if single:
@@ -153,8 +170,8 @@ class KMZ:
     def get_pollution(self, user_coords):
         item = self._find_coords_item(user_coords)
         image = self._load_images(item[1], single=True)
-        img_ = self._find_coords_image(user_coords, item, image)
-        print(item)
+        pollution_steps = self._find_pollution_coords(user_coords, item, image)
+        print(pollution_steps)
 
     def global_imager(self, ) -> None:
         globe_images = [self._load_images(matrix["image"].tolist()) for matrix in self.globe_matrix]
