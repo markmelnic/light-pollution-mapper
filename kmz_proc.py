@@ -17,9 +17,8 @@ class KMZ:
         if not os.path.isfile(CSV_KML_DOC):
             self.kml_file = self.kmz_zip.open(ZIP_KML_DOC, "r").read()
             self._indexer_csv()
-            self._load_csv()
-        else:
-            self._load_csv()
+        self._load_df()
+        self._arrange_df()
 
     def _indexer_csv(self,) -> None:
         kml_content = html.fromstring(self.kml_file)
@@ -42,9 +41,20 @@ class KMZ:
                     [index, image, draw_order, north, south, east, west, rotation]
                 )
 
-    def _load_csv(self, ) -> None:
+    def _load_df(self, ) -> None:
         self.df = pd.read_csv(CSV_KML_DOC)
         self.df.sort_values(by='north', ascending=False, inplace = True)
+
+    def _arrange_df(self, ) -> None:
+        self.globe_matrix = []
+        for i, row in self.df.iterrows():
+            sub_df = self.df.loc[(self.df['north'] == row['north']) & (self.df['south'] == row['south'])]
+            if sub_df.empty:
+                continue
+            else:
+                sub_df.sort_values(by='west', inplace = True)
+                self.globe_matrix.append(sub_df)
+                self.df.drop(sub_df.index, inplace = True)
 
     def _load_images(self, images) -> list:
         if images:
@@ -82,19 +92,7 @@ class KMZ:
         return new_image
 
     def global_imager(self, ) -> None:
-        globe_matrix = []
-        globe_images = []
-        for i, row in self.df.iterrows():
-            sub_df = self.df.loc[(self.df['north'] == row['north']) & (self.df['south'] == row['south'])]
-            if sub_df.empty:
-                continue
-            else:
-                sub_df.sort_values(by='west', inplace = True)
-                sub_matrix = sub_df["image"].tolist()
-                globe_matrix.append(sub_matrix)
-                self.df.drop(sub_df.index, inplace = True)
-                globe_images.append(self._load_images(sub_matrix))
-
+        globe_images = [self._load_images(matrix["image"].tolist()) for matrix in self.globe_matrix]
         self._generate_image(globe_images, fullvh=True).save(KMZ_GLOBAL_IMAGE)
 
 
