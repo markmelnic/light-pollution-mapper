@@ -65,15 +65,13 @@ class KMZ:
                 sub_matrix = sub_df["image"].tolist()
                 globe_matrix.append(sub_matrix)
                 self.df.drop(sub_df.index, inplace = True)
+                globe_images.append(self.load_images(sub_matrix))
 
-                sub_images = self.load_images(sub_matrix)
-                globe_images.append(self.generate_image(sub_images, horizontal=True))
+        self.generate_image(globe_images, fullvh=True).save(KMZ_GLOBAL_IMAGE)
 
-        self.generate_image(globe_images, vertical=True).save(KMZ_GLOBAL_IMAGE)
-
-    def generate_image(self, images, vertical=False, horizontal=False):
-        widths, heights = zip(*(img.size for img in images))
+    def generate_image(self, images: list, fullvh=False, vertical=False, horizontal=False):
         if horizontal:
+            widths, heights = zip(*(img.size for img in images))
             total_width = sum(widths)
             max_height = max(heights)
 
@@ -84,6 +82,7 @@ class KMZ:
                 x_offset += img.size[0]
 
         elif vertical:
+            widths, heights = zip(*(img.size for img in images))
             max_width = max(widths)
             total_height = sum(heights)
 
@@ -92,8 +91,12 @@ class KMZ:
             for img in images:
                 new_image.paste(img, (0,y_offset))
                 y_offset += img.size[1]
+        elif fullvh:
+            vertical_set = [self.generate_image(image, horizontal=True) for image in images]
+            new_image = self.generate_image(vertical_set, vertical=True)
 
         return new_image
 
 if __name__ == "__main__":
     kmz = KMZ()
+    kmz.global_imager()
