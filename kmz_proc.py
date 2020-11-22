@@ -16,12 +16,12 @@ class KMZ:
         self.kmz_zip = ZipFile(glob.glob("*.kmz")[0], "r")
         if not os.path.isfile(CSV_KML_DOC):
             self.kml_file = self.kmz_zip.open(ZIP_KML_DOC, "r").read()
-            self.indexer_csv()
-            self.load_csv()
+            self._indexer_csv()
+            self._load_csv()
         else:
-            self.load_csv()
+            self._load_csv()
 
-    def indexer_csv(self,) -> None:
+    def _indexer_csv(self,) -> None:
         kml_content = html.fromstring(self.kml_file)
         with open(CSV_KML_DOC, "w", newline="") as kml_csv:
             kml_csv_writer = csv.writer(kml_csv)
@@ -42,34 +42,18 @@ class KMZ:
                     [index, image, draw_order, north, south, east, west, rotation]
                 )
 
-    def load_csv(self, ) -> None:
+    def _load_csv(self, ) -> None:
         self.df = pd.read_csv(CSV_KML_DOC)
         self.df.sort_values(by='north', ascending=False, inplace = True)
 
-    def load_images(self, images) -> list:
+    def _load_images(self, images) -> list:
         if images:
             self.kmz_imgs = [Image.open(self.kmz_zip.open(ZIP_KMZ_IMG_FOLDER+"/"+image)) for image in images]
         else:
             self.kmz_imgs = [Image.open(self.kmz_zip.open(image)) for image in self.kmz_zip.namelist() if image.split("/")[0] == ZIP_KMZ_IMG_FOLDER]
         return self.kmz_imgs
 
-    def global_imager(self, ) -> None:
-        globe_matrix = []
-        globe_images = []
-        for i, row in self.df.iterrows():
-            sub_df = self.df.loc[(self.df['north'] == row['north']) & (self.df['south'] == row['south'])]
-            if sub_df.empty:
-                continue
-            else:
-                sub_df.sort_values(by='west', inplace = True)
-                sub_matrix = sub_df["image"].tolist()
-                globe_matrix.append(sub_matrix)
-                self.df.drop(sub_df.index, inplace = True)
-                globe_images.append(self.load_images(sub_matrix))
-
-        self.generate_image(globe_images, fullvh=True).save(KMZ_GLOBAL_IMAGE)
-
-    def generate_image(self, images: list, fullvh=False, vertical=False, horizontal=False):
+    def _generate_image(self, images: list, fullvh=False, vertical=False, horizontal=False):
         if horizontal:
             widths, heights = zip(*(img.size for img in images))
             total_width = sum(widths)
@@ -92,10 +76,27 @@ class KMZ:
                 new_image.paste(img, (0,y_offset))
                 y_offset += img.size[1]
         elif fullvh:
-            vertical_set = [self.generate_image(image, horizontal=True) for image in images]
-            new_image = self.generate_image(vertical_set, vertical=True)
+            vertical_set = [self._generate_image(image, horizontal=True) for image in images]
+            new_image = self._generate_image(vertical_set, vertical=True)
 
         return new_image
+
+    def global_imager(self, ) -> None:
+        globe_matrix = []
+        globe_images = []
+        for i, row in self.df.iterrows():
+            sub_df = self.df.loc[(self.df['north'] == row['north']) & (self.df['south'] == row['south'])]
+            if sub_df.empty:
+                continue
+            else:
+                sub_df.sort_values(by='west', inplace = True)
+                sub_matrix = sub_df["image"].tolist()
+                globe_matrix.append(sub_matrix)
+                self.df.drop(sub_df.index, inplace = True)
+                globe_images.append(self._load_images(sub_matrix))
+
+        self._generate_image(globe_images, fullvh=True).save(KMZ_GLOBAL_IMAGE)
+
 
 if __name__ == "__main__":
     kmz = KMZ()
