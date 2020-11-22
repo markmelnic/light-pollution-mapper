@@ -56,6 +56,25 @@ class KMZ:
                 self.globe_matrix.append(sub_df)
                 self.df.drop(sub_df.index, inplace = True)
 
+    def _find_coords_item(self, coords: list) -> list:
+        if myloc[0] > 0: # first 10
+            gset = [None, -7]
+            if myloc[1] > 0: # last 21
+                sset = [22, None]
+            else:
+                sset = [None, -21]
+        else: # last 7
+            gset = [10, None]
+            if myloc[1] > 0: # last 21
+                sset = [22, None]
+            else:
+                sset = [None, -21]
+
+        for item in self.globe_matrix[gset[0]:gset[1]]:
+            for i, row in item.iloc[sset[0]:sset[1]].iterrows():
+                if (row['north'] >= myloc[0] >= row['south']) and (row['west'] <= myloc[1] <= row['east']):
+                    return row.tolist()
+
     def _load_images(self, images) -> list:
         if images:
             self.kmz_imgs = [Image.open(self.kmz_zip.open(ZIP_KMZ_IMG_FOLDER+"/"+image)) for image in images]
@@ -97,5 +116,9 @@ class KMZ:
 
 
 if __name__ == "__main__":
+    myloc = [52.379971, 4.8196657]
+
     kmz = KMZ()
-    kmz.global_imager()
+    #kmz.global_imager()
+
+    print(kmz._find_coords_item(myloc))
