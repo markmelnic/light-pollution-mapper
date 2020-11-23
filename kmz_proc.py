@@ -6,28 +6,9 @@ from zipfile import ZipFile
 from PIL import Image
 from scipy.spatial import distance
 
+from settings import *
+
 pd.options.mode.chained_assignment = None
-
-COLORS = [
-    (255, 255, 255), # white
-    (220, 190, 250), # light purple
-    (240, 110, 250), # purple
-    (230, 0, 0),     # red
-    (255, 85, 10),   # orange
-    (255, 255, 0),   # yellow
-    (50, 140, 0),    # green
-    (0, 150, 210),   # light blue
-    (10, 75, 180),   # blue
-    (0, 35, 115),    # dark blue
-    (128, 128, 128), # light grey
-    (77, 77, 77),    # dark grey
-    (0, 0, 0),       # black
-]
-
-ZIP_KML_DOC = "doc.kml"
-CSV_KML_DOC = "kml_index.csv"
-ZIP_KMZ_IMG_FOLDER = "files"
-KMZ_GLOBAL_IMAGE = "map.jpg"
 
 class KMZ:
     def __init__(self) -> None:
@@ -75,22 +56,22 @@ class KMZ:
                 self.df.drop(sub_df.index, inplace = True)
 
     def _find_coords_item(self, coords: list) -> list:
-        if myloc[0] > 0: # first 10
+        if coords[0] > 0: # first 10
             gset = [None, -7]
-            if myloc[1] > 0: # last 21
+            if coords[1] > 0: # last 21
                 sset = [22, None]
             else:
                 sset = [None, -21]
         else: # last 7
             gset = [10, None]
-            if myloc[1] > 0: # last 21
+            if coords[1] > 0: # last 21
                 sset = [22, None]
             else:
                 sset = [None, -21]
 
         for item in self.globe_matrix[gset[0]:gset[1]]:
             for i, row in item.iloc[sset[0]:sset[1]].iterrows():
-                if (row['north'] >= myloc[0] >= row['south']) and (row['west'] <= myloc[1] <= row['east']):
+                if (row['north'] >= coords[0] >= row['south']) and (row['west'] <= coords[1] <= row['east']):
                     return row.tolist()
 
     def _find_pollution_coords(self, user_coords: list, item: list, image) -> list:
@@ -170,8 +151,8 @@ class KMZ:
     def get_pollution(self, user_coords):
         item = self._find_coords_item(user_coords)
         image = self._load_images(item[1], single=True)
-        pollution_steps = self._find_pollution_coords(user_coords, item, image)
-        print(pollution_steps)
+        closest_unique_spots = self._find_pollution_coords(user_coords, item, image)
+        return closest_unique_spots
 
     def global_imager(self, ) -> None:
         globe_images = [self._load_images(matrix["image"].tolist()) for matrix in self.globe_matrix]
