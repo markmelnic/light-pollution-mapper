@@ -14,6 +14,10 @@ COLORS = [
     (0, 0, 0),       # black
 ]
 
+HI_P = COLORS[0:5]
+ME_P = COLORS[5:9]
+LO_P = COLORS[9:13]
+
 ZIP_KML_DOC = "doc.kml"
 CSV_KML_DOC = "kml_index.csv"
 ZIP_KMZ_IMG_FOLDER = "files"
