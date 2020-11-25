@@ -1,70 +1,72 @@
-
-from selenium_module import *
-from px_utils import *
-
 import googlemaps
+from math import sqrt
+from scipy.spatial import distance
+
+from kmz_proc import KMZ
+from key import GEOCODE_KEY
+from settings import COLORS
 
 
-# get latitude and longitude of place
-def loc_lat_lng(city):
-    location = _GMAPS.geocode(city)
-    lat = location[0]["geometry"]["location"]["lat"]
-    lng = location[0]["geometry"]["location"]["lng"]
-    location = (lat, lng)
-    return location
+class LPM:
+    def __init__(self, kmz_obj) -> None:
+        self.kmz_obj = kmz_obj
+        self.gmaps = googlemaps.Client(key=GEOCODE_KEY)
 
-def lpm(city):
-    global _GMAPS
-    
-    from key import API_KEY
-    _GMAPS = googlemaps.Client(key = API_KEY)
-    
-    zoom = 10
-    resolution = "1080,1080"
-    
-    return sel_lpm(zoom, resolution)
+    def user_location(self, location):
+        geocoded_location = self.gmaps.geocode(location)
+        lat = geocoded_location[0]["geometry"]["location"]["lat"]
+        lng = geocoded_location[0]["geometry"]["location"]["lng"]
+        return (lat, lng)
 
-def sel_lpm(zoom, resolution):
-    for i in range(10):
-        try:
-            dv = boot(resolution)
-            lp_map(dv, city, zoom)
-            killd(dv)
+    def get_pollution(self, location):
+        user_coords = self.user_location(location)
+        item = self.kmz_obj._find_coords_item(user_coords)
+        image = self.kmz_obj._load_images(item[1], single=True)
+        closest_unique_spots = self._find_pollution_coords(user_coords, item, image)
+        return closest_unique_spots
 
-            # closest spots for each radiance index
-            spots = find_spot_edge()
-            # location json
-            location = loc_lat_lng(city)
-            # location elevation json
-            elev = _GMAPS.elevation(location)
-            # closest unpolluted spot
-            sp_coords = spot_coords(location, spots[1], zoom, resolution)
-            # distance to the spot
-            final_dist = _GMAPS.distance_matrix(location, sp_coords)['rows'][0]['elements'][0]['distance']['text']
-            return(sp_coords)
-        except Exception as e:
-            print(e)
-            zoom -= 1
-            print("zooming out -", zoom)
+    def _find_pollution_coords(self, user_coords: list, item: list, image) -> list:
+        def _matrix_geo_coords(matrix_coords):
+            lat = item[3]-((item[3]-item[4])/width*matrix_coords[1])
+            lng = item[6]+((item[5]-item[6])/height*matrix_coords[0])
+            return (lat, lng)
 
-if __name__ == '__main__':
+        def _closest_color(rgb: list) -> tuple:
+            r, g, b = rgb
+            color_diffs = []
+            for color in COLORS:
+                cr, cg, cb = color
+                color_diff = sqrt(abs(r - cr)**2 + abs(g - cg)**2 + abs(b - cb)**2)
+                color_diffs.append((color_diff, color))
+            return min(color_diffs)[1]
+
+        def _closest(node: tuple, nodes: list) -> tuple:
+            closest_px = distance.cdist([node], nodes).argmin()
+            return nodes[closest_px]
+
+        width, height = image.size
+        wpx = int(height*(user_coords[1]-item[6])/(item[5]-item[6]))
+        hpx = width - int(width*(user_coords[0]-item[4])/(item[3]-item[4]))
+        pixelmap = image.load()
+        data = {}
+        for c in COLORS:
+            data[COLORS.index(c)] = []
+        for i in range(int(width/2)):
+            for j in range(int(height/2)):
+                color = _closest_color(pixelmap[i*2, j*2])
+                for c in COLORS:
+                    if color == c:
+                        data[COLORS.index(c)].append([i*2, j*2])
+        
+        closest_unique_spots = [_matrix_geo_coords(_closest((wpx, hpx), data[COLORS.index(c)])) for c in COLORS]
+        return closest_unique_spots
+
+
+if __name__ == "__main__":
     try:
-        city = input("City: ")
-        coords = lpm(city)
+        city = input("Location: ")
+        lpm = LPM(KMZ())
+        spots = lpm.get_pollution(city)
+        print(spots)
     except KeyboardInterrupt:
-            exit(0)
-
-'''
-i = 0
-max_h = 0
-while i < len(elev2):
-    temp = elev2[i]["elevation"]
-    if temp > max_h:
-        max_h = elev2[i]["elevation"]
-        max_lat = elev2[i]["location"]["lat"]
-        max_lng = elev2[i]["location"]["lng"]
-        max_coords = (max_lat, max_lng)
-    i += 1
-print("max is: ", max_h)
-print("max coordinates are: ", max_coords)
-'''
+        exit(0)
