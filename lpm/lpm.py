@@ -2,7 +2,7 @@ import googlemaps
 from math import sqrt
 from scipy.spatial import distance
 
-from settings import COLORS
+from lpm.settings import COLORS
 
 
 class LPM:
