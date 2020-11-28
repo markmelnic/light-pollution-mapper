@@ -12,8 +12,8 @@ class LPM:
 
     def get_pollution(self, location: str) -> list:
         user_coords = self._user_location(location)
-        item = self.kmz_obj._find_coords_item(user_coords)
-        image = self.kmz_obj._load_images(item[1], single=True)
+        item = self.kmz_obj.coords_item(user_coords)
+        image = self.kmz_obj.load_images(item[1], single=True)
         closest_unique_spots = self._find_pollution_coords(user_coords, item, image)
         return closest_unique_spots
 
