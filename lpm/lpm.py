@@ -10,12 +10,12 @@ class LPM:
         self.kmz_obj = kmz_obj
         self.gmaps = googlemaps.Client(key=api_key)
 
-    def get_pollution(self, location: str) -> list:
+    def get_pollution(self, location: str, get_user=False) -> list:
         user_coords = self._user_location(location)
         item = self.kmz_obj.coords_item(user_coords)
         image = self.kmz_obj.load_images(item[1], single=True)
         closest_unique_spots = self._find_pollution_coords(user_coords, item, image)
-        return closest_unique_spots
+        return user_coords, closest_unique_spots if get_user else closest_unique_spots
 
     def _user_location(self, location: str) -> tuple:
         geocoded_location = self.gmaps.geocode(location)
