@@ -2,6 +2,7 @@ import googlemaps, requests, scalg, json
 from math import asin, sin, cos, sqrt
 from scipy.spatial import distance
 from geopy.distance import geodesic
+from datetime import datetime
 
 from lpm.settings import COLORS, LO_P
 
@@ -32,15 +33,19 @@ class LPM:
 
     def _coords_weather(self, coords: tuple) -> list:
         req_url = "https://api.openweathermap.org/data/2.5/forecast?units=metric&lat={}&lon={}&appid={}".format(coords[0], coords[1], self.weather_key)
-        response = requests.get(req_url)
+        response = json.loads(requests.get(req_url).content)
+        sunrise = datetime.fromtimestamp(response["city"]['sunrise']).hour
+        sunset = datetime.fromtimestamp(response["city"]['sunset']).hour
         datae = []
-        for item in json.loads(response.content)["list"]:
-            time = item["dt_txt"]
-            clouds = item["clouds"]["all"]
-            temperature = item["main"]["temp"]
-            pressure = item["main"]["pressure"]
-            humidity = item["main"]["humidity"]
-            datae.append([time, clouds, temperature, pressure, humidity])
+        for item in response["list"]:
+            hour = datetime.fromtimestamp(item["dt"]).hour
+            if hour > sunset or hour < sunrise:
+                time = item["dt_txt"]
+                clouds = item["clouds"]["all"]
+                temperature = item["main"]["temp"]
+                pressure = item["main"]["pressure"]
+                humidity = item["main"]["humidity"]
+                datae.append([time, clouds, temperature, pressure, humidity])
         return sorted(datae, key = lambda x: x[1])[0]
 
     def _find_pollution_coords(self, user_coords: list, item: list, image: bytes) -> list:
