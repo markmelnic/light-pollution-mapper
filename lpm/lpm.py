@@ -41,7 +41,7 @@ class LPM:
             pressure = item["main"]["pressure"]
             humidity = item["main"]["humidity"]
             datae.append([time, clouds, temperature, pressure, humidity])
-        return sorted(datae, key = lambda x: x[1])[-1]
+        return sorted(datae, key = lambda x: x[1])[0]
 
     def _find_pollution_coords(self, user_coords: list, item: list, image: bytes) -> list:
         def _matrix_geo_coords(matrix_coords: list) -> tuple:
