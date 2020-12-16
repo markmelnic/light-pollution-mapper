@@ -1,5 +1,5 @@
 import googlemaps, requests, scalg, json
-from math import asin, sin, cos, sqrt
+from math import sqrt
 from scipy.spatial import distance
 from geopy.distance import geodesic
 from datetime import datetime
