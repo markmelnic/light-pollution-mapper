@@ -1,4 +1,3 @@
-from os import close
 import googlemaps, requests, scalg, json
 from math import sqrt
 from scipy.spatial import distance
@@ -6,6 +5,8 @@ from geopy.distance import geodesic
 from datetime import datetime
 
 from lpm.settings import COLORS, LO_P
+
+PX_SKIP = 10
 
 class LPM:
     def __init__(self, kmz_obj, geo_key: str, weather_key: str) -> None:
@@ -71,18 +72,55 @@ class LPM:
         width, height = image.size
         wpx = int(height * (user_coords[1] - edges[3]) / (edges[2] - edges[3]))
         hpx = width - int(width * (user_coords[0] - edges[1]) / (edges[0] - edges[1]))
+
         pixelmap = image.load()
+
+        '''
         data = {}
         for i, c in enumerate(LO_P):
             data[i] = []
-        for i in range(int(width / 3)):
-            for j in range(int(height / 3)):
-                color = _closest_color(pixelmap[i * 3, j * 3])
+        for i in range(int(width / PX_SKIP)):
+            for j in range(int(height / PX_SKIP)):
+                color = _closest_color(pixelmap[i * PX_SKIP, j * PX_SKIP])
                 for c in LO_P:
                     if color == c:
-                        data[LO_P.index(c)].append([i * 3, j * 3])
+                        data[LO_P.index(c)].append([i * PX_SKIP, j * PX_SKIP])
+        
+        return [_matrix_geo_coords(_closest((wpx, hpx), data[i])) for i, c in enumerate(LO_P)]
+        '''
 
-        closest_unique_spots = [
-            _matrix_geo_coords(_closest((wpx, hpx), data[i])) for i, c in enumerate(LO_P)
-        ]
-        return closest_unique_spots
+        ilev = 0
+        cus = [] # closest_unique_spots
+        indexed_colors = []
+        stopper = True
+        while not len(cus) == len(LO_P) and stopper:
+            ilev += 1
+            layer = []
+            # top row
+            wpos = wpx - ilev
+            for i in range(hpx - ilev, hpx + ilev):
+                layer.append([wpos, i])
+            # right column
+            hpos = hpx + ilev
+            for i in range(wpx - ilev, wpx + ilev):
+                layer.append([i, hpos])
+            # bottom row
+            wpos = wpx + ilev
+            for i in range(hpx - ilev + 1, hpx + ilev + 1):
+                layer.append([wpos, i])
+            # left column
+            hpos = hpx - ilev
+            for i in range(wpx - ilev + 1, wpx + ilev + 1):
+                layer.append([i, hpos])
+
+            for px in layer:
+                try:
+                    color = _closest_color(pixelmap[px[0], px[1]])
+                except IndexError:
+                    stopper = False
+                    break
+                if not color in indexed_colors and color in LO_P:
+                    cus.append(_matrix_geo_coords(px))
+                    indexed_colors.append(color)
+
+        return cus
