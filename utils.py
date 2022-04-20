@@ -1,6 +1,23 @@
 from math import sqrt
 
-from .settings import COLORS, LO_P
+COLORS = [
+    (255, 255, 255),  # 0 white
+    (225, 190, 255),  # 1 light purple
+    (225, 110, 255),  # 2 purple
+    (230, 0, 0),      # 3 red
+    (255, 80, 0),     # 4 orange
+    (255, 255, 0),    # 5 yellow
+    (50, 140, 0),     # 6 green
+    (0, 150, 210),    # 7 light blue
+    (0, 75, 180),     # 8 blue
+    (0, 35, 115),     # 9 dark blue
+    (128, 128, 128),  # 10 light grey
+    (77, 77, 77),     # 11 dark grey
+    #(0, 0, 0),        # 12 black
+]
+
+HI_P = COLORS[:7]
+LO_P = COLORS[7:10] # skipped black since it's usually ocean
 
 def find_pollution_coords(user_coords: list, edges: list, image: bytes) -> list:
     width, height = image.size
@@ -35,22 +52,23 @@ def find_pollution_coords(user_coords: list, edges: list, image: bytes) -> list:
 
         for px in layer:
             try:
-                color = closest_color(pixelmap[px[0], px[1]])
+                color = _closest_color(pixelmap[px[0], px[1]])
             except IndexError:
                 stopper = False
                 break
             if not color in indexed_colors and color in LO_P:
-                cus.append(matrix_geo_coords(width, height, edges, px))
+                cus.append(_matrix_geo_coords(width, height, edges, px))
                 indexed_colors.append(color)
 
     return cus
 
-def matrix_geo_coords(width: int, height: int, edges: list, matrix_coords: list) -> tuple:
-    lat = edges[0] - ((edges[0] - edges[1]) / width * matrix_coords[1])
-    lng = edges[3] + ((edges[2] - edges[3]) / height * matrix_coords[0])
-    return (lat, lng)
+def _matrix_geo_coords(width: int, height: int, edges: list, matrix_coords: list) -> tuple:
+    return (
+        edges[0] - ((edges[0] - edges[1]) / width * matrix_coords[1]), # latitude
+        edges[3] + ((edges[2] - edges[3]) / height * matrix_coords[0]) # longitude
+    )
 
-def closest_color(rgb: list) -> tuple:
+def _closest_color(rgb: list) -> tuple:
     r, g, b = rgb
     color_diffs = []
     for color in COLORS:
