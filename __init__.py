@@ -1,1 +1,1 @@
-from lpm import LPM
+from .lpm import LPM
