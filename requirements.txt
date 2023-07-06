@@ -1,5 +1,5 @@
 scalg==0.1.4
 geopy==2.0.0
-scipy==1.5.4
+scipy==1.10.0
 googlemaps==4.4.2
 requests==2.31.0
